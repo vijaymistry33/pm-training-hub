@@ -6373,6 +6373,11 @@ function sbPanel(){
     var qr = el('div', {class:'sync-qr'}); box.appendChild(qr);
     box.appendChild(el('div', {class:'sync-row'}, [el('code', {class:'sync-link', text: link}), el('button', {type:'button', class:'btn btn-small', 'data-fid':'copy-sync', onclick:function(e){ copyText(link, e.currentTarget, 'Copy link'); }}, ['Copy link'])]));
     drawQr(qr, link);
+    var topic = window.HUB_SYNC && window.HUB_SYNC.topic;
+    if (topic) {
+      box.appendChild(el('p', {text:'Job alerts on your phone: install the free ntfy app, tap + and subscribe to this topic. Each scan on this PC sends an alert when new roles appear.'}));
+      box.appendChild(el('div', {class:'sync-row'}, [el('code', {class:'sync-link', text: topic}), el('button', {type:'button', class:'btn btn-small', 'data-fid':'copy-topic', onclick:function(e){ copyText(topic, e.currentTarget, 'Copy topic'); }}, ['Copy topic'])]));
+    }
   } else {
     box.appendChild(el('button', {type:'button', class:'btn btn-small btn-quiet', 'data-fid':'sync-unlink', onclick:function(){ try { localStorage.removeItem('pmhub.sync.key'); } catch(e){} location.reload(); }}, ['Unlink this device']));
   }
