@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#EDF0EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111724" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PM Hub">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PM Training Hub</title>
 <meta name="description" content="Offline hub for VIjay's PM training: today's tasks, progress, trackers, lessons, cheat sheets and prompts.">
@@ -6354,10 +6361,11 @@ function sbPanel(){
   var box = el('section', {class:'sync-box'}, [el('h2', {text:'Your computer and phone in sync'})]);
   if (!SB.key) {
     if (IS_FILE) { box.appendChild(el('p', {text:'Sync isn’t set up on this computer: the file sync-config.js is missing from your PM-Training folder.'})); return box; }
-    box.appendChild(el('p', {text:'Link this phone or browser to your hub: on your PC, open the hub, go to Backup and restore and scan the code there, or enter the sync code below.'}));
-    var inp = el('input', {type:'text', id:'sync-code', placeholder:'Sync code', autocomplete:'off', autocapitalize:'off', spellcheck:'false', 'aria-label':'Sync code'});
+    box.appendChild(el('p', {text:'Link this phone or browser to your hub: on your PC, open the hub, go to Backup and restore and scan the code there, or paste the link from that page below.'}));
+    var inp = el('input', {type:'text', id:'sync-code', placeholder:'Sync code or link', autocomplete:'off', autocapitalize:'off', spellcheck:'false', 'aria-label':'Sync code'});
     box.appendChild(el('div', {class:'sync-row'}, [inp, el('button', {type:'button', class:'btn', 'data-fid':'sync-start', onclick:function(){
-      var v = inp.value.trim();
+      var v = inp.value.trim(), m = v.match(/[#&]sync=([A-Za-z0-9]+)/);
+      if (m) v = m[1];
       if (!/^[A-Za-z0-9]{24,64}$/.test(v)) { inp.setCustomValidity('That doesn’t look like a sync code. It is 32 letters and numbers.'); inp.reportValidity(); return; }
       try { localStorage.setItem('pmhub.sync.key', v); } catch(e){}
       location.reload(); }}, ['Start syncing'])]));
@@ -6524,5 +6532,6 @@ window.addEventListener('storage', function(e){ if (e.key === KEY) { var a = doc
 qbInit(); applyTheme(); banner(); savedAt(); badges(); route(); autoCheck(); cloudInit(); sbInit();
 })();
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>
