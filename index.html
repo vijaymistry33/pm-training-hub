@@ -1095,6 +1095,8 @@ body.fx-open{overflow:hidden}
 .fx-m-view .fx-acts .fx-go{flex:1 1 40%;order:-1}
 .fx-music{display:inline-flex;align-items:center;gap:8px;padding:8px 2px;color:var(--now-ink);font-size:15.5px;font-weight:600;text-decoration:none;opacity:.9}
 .fx-music:hover{text-decoration:underline;text-underline-offset:3px}
+.fx-mtip{margin:6px 0 0 30px;max-width:38ch;font-size:13.5px;line-height:1.5;color:var(--now-ink);opacity:.72}
+.fx-malt{color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .fx-music svg,.now-music svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .fx-link{padding:8px 2px;border:0;background:none;color:var(--now-ink);font:inherit;font-size:14.5px;text-decoration:underline;text-underline-offset:3px;opacity:.7;cursor:pointer}
 .fx-timer{position:relative;align-self:center;width:min(240px,64vw);margin:26px 0 18px}
@@ -7319,6 +7321,37 @@ var ER_TITLES = {er:'Equity research', erplan:'NISM study plan', erpractice:'Pra
 var DIWALI = {'2026-11-08': 1};
 var NEW_CARDS_PER_DAY = 20;
 var BRAINFM = 'https://my.brain.fm/';
+var BRAINFM_PLAY = 'https://play.google.com/store/apps/details?id=com.brainfm.app';
+var BRAINFM_IOS = 'https://apps.apple.com/app/id1110684238';
+/* Music must play from the Brain.fm app (phones) or its own browser tab (computers).
+   A link opened from the installed app lands in an in-app browser that closes, and the
+   music with it, the moment you come back, so phones hand off to the Brain.fm app. */
+function musicPlat(){
+  var u = navigator.userAgent || '';
+  if (/Android/i.test(u)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) return 'ios';
+  return 'web';
+}
+function musicHref(alt){
+  var p = musicPlat();
+  if (p === 'android') return alt ? 'intent://my.brain.fm/#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(BRAINFM) + ';end'
+    : 'intent://my.brain.fm/#Intent;scheme=https;package=com.brainfm.app;S.browser_fallback_url=' + encodeURIComponent(BRAINFM_PLAY) + ';end';
+  if (p === 'ios') return alt ? 'x-safari-https://my.brain.fm/' : BRAINFM_IOS;
+  return BRAINFM;
+}
+function musicAttrs(o, alt){
+  o = o || {}; o.href = musicHref(alt); o['data-music'] = musicPlat();
+  if (musicPlat() === 'web') { o.target = '_blank'; o.rel = 'noopener'; }
+  return o;
+}
+function musicTip(){
+  var p = musicPlat();
+  if (p === 'web') return 'Opens in its own tab, so it keeps playing while you work here.';
+  return p === 'ios' ? 'Opens Brain.fm through the App Store: tap Open, start the music, then come back. It keeps playing.' : 'Opens the Brain.fm app, so the music keeps playing when you come back. If the Play Store opens, tap Open.';
+}
+function musicFix(root){
+  (root || document).querySelectorAll('a[href^="https://my.brain.fm"]').forEach(function(a){ var o = musicAttrs({}); a.href = o.href; a.setAttribute('data-music', o['data-music']); if (!o.target) { a.removeAttribute('target'); a.removeAttribute('rel'); } });
+}
 var QUIZ = null, CARDS = null, QTIMER = null;
 
 function erS(){
@@ -8234,7 +8267,7 @@ function abInit(){
   var bar = el('header', {class:'appbar', id:'appbar'}, [
     el('button', {type:'button', class:'ab-btn ab-back', id:'ab-back', 'aria-label':'Back', hidden:true, onclick:function(){ location.hash = '#/' + (AB_PARENT[currentRoute] || 'today'); }}, [svgIcon('back')]),
     el('div', {class:'ab-title'}, [el('b', {id:'ab-title', text:'Today'}), el('small', {id:'ab-sub'})]),
-    el('a', {class:'ab-btn ab-music', id:'ab-music', href:BRAINFM, target:'_blank', rel:'noopener', 'aria-label':'Focus music on Brain.fm', title:'Focus music on Brain.fm'}, [svgIcon('music')]),
+    el('a', musicAttrs({class:'ab-btn ab-music', id:'ab-music', 'aria-label':'Focus music on Brain.fm', title:'Focus music on Brain.fm'}), [svgIcon('music')]),
     el('button', {type:'button', class:'ab-btn', id:'ab-search', 'aria-label':'Search', onclick:function(){ location.hash = '#/search'; setTimeout(function(){ var q = document.getElementById('q-m'); if (q) q.focus(); }, 30); }}, [svgIcon('search')]),
     el('a', {class:'ab-sync', id:'ab-sync', href:'#/backup', 'aria-label':'Sync status'}, [el('i')]),
     el('a', {class:'ab-ring', id:'ab-ring', href:'#/today'}, [])]);
@@ -8312,7 +8345,7 @@ function erInit(){
   });
   NAMES.erch = 'Equity research'; NAMES.erformulas = 'Formula sheet';
   quizLoad();
-  abInit();
+  abInit(); musicFix();
   readbarInit();
   focusInit();
   ER_OK = true;
@@ -8417,7 +8450,7 @@ function nowCard(){
   } else {
     var btn = c.href ? el('a', {class:'btn btn-solid now-go', href:c.href, 'data-fid':'now-go', text:c.go}) : el('button', {type:'button', class:'btn btn-solid now-go', 'data-fid':'now-go', onclick:c.fn}, [c.go]);
     var alt = c.alt ? (typeof c.alt[1] === 'string' ? el('a', {class:'now-alt', href:c.alt[1], text:c.alt[0]}) : el('button', {type:'button', class:'now-alt', onclick:c.alt[1]}, [c.alt[0]])) : null;
-    var music = el('a', {class:'now-music', href:BRAINFM, target:'_blank', rel:'noopener', 'data-fid':'now-music'}, [svgIcon('music'), 'Focus music']);
+    var music = el('a', musicAttrs({class:'now-music', 'data-fid':'now-music', title:musicTip()}), [svgIcon('music'), 'Focus music']);
     var nudge = !c.live && missedYesterday() && g.done < g.goals ? el('p', {class:'now-nudge', text:'Yesterday slipped. Never miss twice: today is the one that counts.'}) : null;
     kids = [nudge, el('p', {class:'now-lab'}, [trk(c.k), c.lab]), el('h2', {class:'now-title', text:c.title}), c.sub ? el('p', {class:'now-sub', text:c.sub}) : null, el('div', {class:'now-acts'}, [btn, alt, music])];
   }
@@ -8533,8 +8566,8 @@ function streakText(sk){
 }
 
 /* ---------- focus sessions ---------- */
-var FOCUS = null, FTIMER = null, WAKE = null, ACTX = null;
-function focusLoad(){ try { FOCUS = JSON.parse(localStorage.getItem('pmhub.focus') || 'null'); } catch(e){ FOCUS = null; } if (FOCUS && (!FOCUS.begun || FOCUS.iso !== today()) && Date.now() - (FOCUS.begun || 0) > 6 * 3600000) FOCUS = null; }
+var FOCUS = null, FTIMER = null, WAKE = null;
+function focusLoad(){ try { FOCUS = JSON.parse(localStorage.getItem('pmhub.focus') || 'null'); } catch(e){ FOCUS = null; } if (FOCUS && (!FOCUS.begun || FOCUS.iso !== today()) && Date.now() - (FOCUS.begun || FOCUS.music || 0) > 6 * 3600000) FOCUS = null; }
 function focusSave(){ try { if (FOCUS) localStorage.setItem('pmhub.focus', JSON.stringify(FOCUS)); else localStorage.removeItem('pmhub.focus'); } catch(e){} }
 function focusActive(){ return FOCUS && FOCUS.begun ? FOCUS : null; }
 function focusLeft(){ if (!FOCUS) return 0; if (!FOCUS.begun) return FOCUS.mins * 60000; var used = (FOCUS.paused || Date.now()) - FOCUS.begun - (FOCUS.pausedTotal || 0); return Math.max(0, FOCUS.mins * 60000 - used); }
@@ -8554,23 +8587,11 @@ function focusOpen(kind){
   if (!FOCUS) return;
   focusSave(); renderFocus(FOCUS.begun ? 'view' : 'ritual');
 }
-function chime(){
-  try {
-    ACTX = ACTX || new (window.AudioContext || window.webkitAudioContext)();
-    [[660, 0], [880, .28]].forEach(function(n){
-      var o = ACTX.createOscillator(), g = ACTX.createGain(), t0 = ACTX.currentTime + n[1];
-      o.type = 'sine'; o.frequency.value = n[0]; o.connect(g); g.connect(ACTX.destination);
-      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
-      o.start(t0); o.stop(t0 + 1);
-    });
-  } catch(e){}
-}
 function wakeOn(){ try { if (navigator.wakeLock && !WAKE) navigator.wakeLock.request('screen').then(function(l){ WAKE = l; l.addEventListener('release', function(){ WAKE = null; }); }, function(){}); } catch(e){} }
 function wakeOff(){ try { if (WAKE) WAKE.release(); } catch(e){} WAKE = null; }
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && focusActive() && !FOCUS.paused) wakeOn(); });
 function focusBegin(){
   FOCUS.begun = Date.now(); FOCUS.pausedTotal = 0; FOCUS.paused = null; FOCUS.rang = false; focusSave();
-  try { ACTX = ACTX || new (window.AudioContext || window.webkitAudioContext)(); if (ACTX.resume) ACTX.resume(); } catch(e){}
   wakeOn(); closeFocus(); focusUi(); if (currentRoute === 'today') renderToday(false);
 }
 function focusPause(){
@@ -8608,11 +8629,14 @@ function renderFocus(mode){
   box.appendChild(el('button', {type:'button', class:'fx-x', 'aria-label': mode === 'ritual' ? 'Not now' : 'Minimise', onclick:function(){ if (mode === 'ritual' && !F.begun) { FOCUS = null; focusSave(); } closeFocus(); focusUi(); }}, [svgIcon(mode === 'ritual' ? 'close' : 'down')]));
   box.appendChild(lab);
   box.appendChild(el('h2', {class:'fx-title', id:'fx-title', text:F.title}));
-  var music = el('a', {class:'fx-music', href:BRAINFM, target:'_blank', rel:'noopener'}, [svgIcon('music'), 'Focus music on Brain.fm']);
+  var music = el('a', musicAttrs({class:'fx-music', 'data-fid':'fx-music'}), [svgIcon('music'), 'Focus music on Brain.fm']);
+  music.addEventListener('click', function(){ if (FOCUS && !FOCUS.begun) { FOCUS.music = Date.now(); focusSave(); } });
+  var mtip = el('p', {class:'fx-mtip'}, [musicTip(), musicPlat() !== 'web' ? ' ' : null, musicPlat() !== 'web' ? el('a', musicAttrs({class:'fx-malt', 'data-fid':'fx-malt'}, true), [musicPlat() === 'ios' ? 'Or play it in Safari' : 'Or play it in Chrome']) : null]);
   if (mode === 'ritual') {
     box.appendChild(el('div', {class:'breathe', 'aria-hidden':'true'}, [el('span'), el('em', {text:'Breathe in · breathe out'})]));
     box.appendChild(el('ul', {class:'fx-prep'}, ['Phone on Do Not Disturb', 'Only this one task until the timer ends', 'Water within reach'].map(function(x){ return el('li', {text:x}); })));
     box.appendChild(el('div', {class:'fx-acts'}, [el('button', {type:'button', class:'btn btn-solid fx-go', 'data-fid':'fx-begin', onclick:focusBegin}, ['Begin · ' + dur(F.mins)]), music]));
+    box.appendChild(mtip);
   } else {
     var left = focusLeft(), frac = left / (F.mins * 60000);
     box.appendChild(el('div', {class:'fx-timer'}, [timerRing(frac), el('span', {class:'fx-time', id:'fx-time', role:'timer', text: fmtClock(left)}), el('small', {class:'fx-of', text: mode === 'end' ? 'Session complete' : 'of ' + dur(F.mins)})]));
@@ -8656,17 +8680,20 @@ function focusTick(){
   var ft = document.getElementById('fx-time'); if (ft) ft.textContent = txt;
   var arc = document.getElementById('fx-arc'); if (arc) { var C = 2 * Math.PI * 88; arc.setAttribute('stroke-dasharray', (C * left / (F.mins * 60000)).toFixed(1) + ' ' + C.toFixed(1)); }
   var lab = document.querySelector('.now.is-live .now-lab'); if (lab && lab.lastChild && lab.lastChild.nodeType === 3) lab.lastChild.textContent = 'In focus · ' + txt + ' left';
-  if (left <= 0 && !F.rang) { F.rang = true; focusSave(); chime(); buzz([30, 80, 30, 80, 30]); renderFocus('end'); }
+  if (left <= 0 && !F.rang) { F.rang = true; focusSave(); buzz([30, 80, 30, 80, 30]); renderFocus('end'); }
 }
 function focusInit(){
   ICONS.down = '<path d="m6 9 6 6 6-6"/>';
   var bar = el('div', {class:'fbar', id:'fbar', hidden:true, role:'region', 'aria-label':'Focus session'}, [
     el('button', {type:'button', class:'fb-open', 'data-fid':'fb-open', onclick:function(){ renderFocus(focusLeft() <= 0 ? 'end' : 'view'); }}, [el('span', {class:'fb-dot', 'aria-hidden':'true'}), el('span', {class:'fb-t'}), el('span', {class:'fb-time'})]),
     el('button', {type:'button', class:'fb-btn fb-p', 'data-fid':'fb-pause', onclick:focusPause}, ['Pause']),
-    el('a', {class:'fb-btn fb-m', href:BRAINFM, target:'_blank', rel:'noopener', 'aria-label':'Focus music on Brain.fm'}, [svgIcon('music')])]);
+    el('a', musicAttrs({class:'fb-btn fb-m', 'aria-label':'Focus music on Brain.fm'}), [svgIcon('music')])]);
   document.body.appendChild(bar);
   focusLoad(); focusUi();
   if (focusActive() && focusLeft() <= 0 && !FOCUS.rang) { FOCUS.rang = true; focusSave(); }
+  /* came back from starting music before pressing Begin: pick the ritual up where it was */
+  if (FOCUS && !FOCUS.begun && FOCUS.music && FOCUS.iso === today() && Date.now() - FOCUS.music < 30 * 60000) renderFocus('ritual');
+  else if (FOCUS && !FOCUS.begun) { FOCUS = null; focusSave(); }
 }
 
 erInit(); qbInit(); applyTheme(); banner(); savedAt(); badges(); route(); autoCheck(); cloudInit(); sbInit();

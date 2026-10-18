@@ -1,7 +1,7 @@
 // Career Hub: opens from the home screen even without a connection.
 // Always tries the network first so updates arrive straight away; falls back to the saved copy offline.
 // Sync calls to the hub account go to another site and are never cached.
-var CACHE = 'pm-hub-v3';
+var CACHE = 'pm-hub-v4';
 var CORE = ['./', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); }));
