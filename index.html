@@ -1299,6 +1299,13 @@ html.is-desktop::-webkit-scrollbar-thumb,html.is-desktop ::-webkit-scrollbar-thu
 html.is-desktop::-webkit-scrollbar-thumb:hover,html.is-desktop ::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--ink) 40%,transparent)}
 html.is-desktop::-webkit-scrollbar-button,html.is-desktop ::-webkit-scrollbar-button{display:none;height:0;width:0}
 
+/* match with the profile */
+.joblist .tag.tag-fit{font-weight:700}
+.joblist .tag.fit-strong{background:var(--gain-wash);color:var(--gain)}
+.joblist .tag.fit-good{background:var(--focus-wash);color:var(--focus)}
+.joblist .tag.fit-stretch{background:var(--sheet);color:var(--muted);border:1px dashed var(--rule)}
+.joblist .jfit{display:block;margin-top:3px;font-size:14px;color:var(--muted);max-width:52rem}
+
 /* ---------- Trader prep ---------- */
 .tp-sprint{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;max-width:52rem;margin:6px 0 24px;padding:14px 18px;border-radius:16px;background:var(--now-bg);color:var(--now-ink)}
 .tp-sprint b{display:block;font-size:18px}
@@ -7350,10 +7357,21 @@ var JF_Q = '', JF_OPEN = null;
 function jf(){
   var f = S.settings.jf; if (!f || typeof f !== 'object') f = S.settings.jf = {};
   if (!Array.isArray(f.types)) f.types = []; if (!Array.isArray(f.lv)) f.lv = [];
-  if (!f.exp) f.exp = 'any'; if (f.expUnk === undefined) f.expUnk = true; if (!f.posted) f.posted = 'any'; if (!f.sort) f.sort = 'fit';
+  if (!f.exp) f.exp = 'any'; if (f.expUnk === undefined) f.expUnk = true; if (!f.posted) f.posted = 'any'; if (!f.sort) f.sort = 'fit'; if (!f.fit) f.fit = 'any';
   return f;
 }
-function jfActive(f){ return f.types.length + f.lv.length + (f.exp !== 'any' ? 1 : 0) + (f.kind ? 1 : 0) + (f.city ? 1 : 0) + (f.posted !== 'any' ? 1 : 0) + (f.hideC ? 1 : 0) + (f.noVisa ? 1 : 0) + (f.visaYes ? 1 : 0) + (S.settings.jobHideTracked ? 1 : 0); }
+var FIT_NAMES = {opt:'options and derivatives', mkt:'markets and trading', fin:'finance', res:'equity research', ai:'LLMs and AI agents', prod:'product and specification work', cust:'client-facing work', py:'Python', sql:'SQL', data:'data analysis'};
+var FIT_ORDER = ['opt', 'mkt', 'res', 'ai', 'prod', 'fin', 'cust', 'py', 'sql', 'data'];
+function fitLevel(j){ return typeof j.fit !== 'number' ? null : j.fit >= 7 ? 'strong' : j.fit >= 4 ? 'good' : 'stretch'; }
+function fitWhy(j){
+  var k = (j.sk || []).slice().sort(function(a, b){ return FIT_ORDER.indexOf(a) - FIT_ORDER.indexOf(b); }).filter(function(x){ return FIT_NAMES[x]; }).slice(0, 4).map(function(x){ return FIT_NAMES[x]; });
+  var bits = [];
+  if (k.length) bits.push('Matches you on ' + (k.length > 1 ? k.slice(0, -1).join(', ') + ' and ' + k[k.length - 1] : k[0]) + '.');
+  if (j.gp && j.gp.length) bits.push('Asks for ' + (j.gp.length > 1 ? j.gp.slice(0, -1).join(', ') + ' and ' + j.gp[j.gp.length - 1] : j.gp[0]) + '.');
+  if (typeof j.exp === 'number' && j.exp > 8) bits.push('Wants ' + j.exp + '+ years.');
+  return bits.join(' ');
+}
+function jfActive(f){ return (f.fit && f.fit !== 'any' ? 1 : 0) + f.types.length + f.lv.length + (f.exp !== 'any' ? 1 : 0) + (f.kind ? 1 : 0) + (f.city ? 1 : 0) + (f.posted !== 'any' ? 1 : 0) + (f.hideC ? 1 : 0) + (f.noVisa ? 1 : 0) + (f.visaYes ? 1 : 0) + (S.settings.jobHideTracked ? 1 : 0); }
 function jobLevel(j){
   var t = j.title || '';
   if (/\b(senior|sr\.?|lead|principal|staff|head|director|vp|avp|vice president|experienced|expert)\b/i.test(t) || j.exp >= 7) return 'senior';
@@ -7374,13 +7392,15 @@ function jobPass(j, f, region, skip){
   if (f.hideC && j.tier === 'C') return false;
   if (f.noVisa && j.visa === 'no' && regionsOf(j).some(function(r){ return r !== 'India'; })) return false;
   if (f.visaYes && j.visa !== 'yes') return false;
+  if (f.fit === 'good' && !(j.fit >= 4)) return false;
+  if (f.fit === 'strong' && !(j.fit >= 7)) return false;
   if (S.settings.jobHideTracked && trackedJob(j)) return false;
   if (JF_Q) { var hay = (j.title + ' ' + j.company + ' ' + (j.location || '') + ' ' + regionsOf(j).join(' ')).toLowerCase(); if (!JF_Q.toLowerCase().split(/\s+/).every(function(w){ return !w || hay.indexOf(w) >= 0; })) return false; }
   return true;
 }
 function jfSave(){ save(); jobsRefresh(); }
 /* read-only view of the job filters, used by the automated checks */
-window.CareerHubJobs = {list: jobList, pass: jobPass, jf: jf, level: jobLevel, age: jobAge, active: jfActive};
+window.CareerHubJobs = {list: jobList, pass: jobPass, jf: jf, level: jobLevel, age: jobAge, active: jfActive, fit: fitLevel};
 function jfSelect(label, key, opts, fid){
   var f = jf();
   return el('label', {class:'jf-field'}, [el('span', {text:label}), el('select', {'data-fid':fid, onchange:function(e){ f[key] = e.target.value; jfSave(); }},
@@ -7418,7 +7438,8 @@ function renderJobs(){
       jfSelect('Posted', 'posted', JOB_POSTED, 'jf-posted'),
       el('label', {class:'jf-field'}, [el('span', {text:'City'}), el('select', {id:'jf-city', 'data-fid':'jf-city', onchange:function(e){ f.city = e.target.value; jfSave(); }})]),
       jfSelect('Company type', 'kind', [['', 'Any company']].concat(Object.keys(KIND_NAMES).filter(function(k){ return kinds[k]; }).map(function(k){ return [k, KIND_NAMES[k]]; })), 'jf-kind'),
-      jfSelect('Order', 'sort', [['fit', 'Best fit first'], ['new', 'Newest first']], 'jf-sort')]),
+      jfSelect('Match with your profile', 'fit', [['any', 'Any match'], ['good', 'Good match or better'], ['strong', 'Strong match only']], 'jf-fit'),
+      jfSelect('Order', 'sort', [['fit', 'Grouped, best match first'], ['match', 'Best match first'], ['new', 'Newest first']], 'jf-sort')]),
     el('div', {class:'jf-row'}, [el('span', {class:'jf-lab', text:'Level'}), el('div', {class:'chips', id:'jf-lv', role:'group', 'aria-label':'Level'})]),
     el('div', {class:'jf-checks'}, [
       el('label', {}, [el('input', {type:'checkbox', 'data-fid':'jf-unk', checked: f.expUnk, onchange:function(e){ f.expUnk = e.target.checked; jfSave(); }}), ' Keep roles that don’t say how much experience they want']),
@@ -7464,6 +7485,8 @@ function jobsRefresh(){
   if (!shown.length) box.appendChild(el('p', {class:'intro', text:'No open roles match these filters on the boards checked. Loosen a filter, or use the careers pages and job boards below.'}));
   var row = function(j, typeTag){
     var tracked = trackedJob(j), tags = [];
+    var fl = fitLevel(j);
+    if (fl) tags.push(el('span', {class:'tag tag-fit fit-' + fl, title:'How well this role matches your profile and skills', text: fl === 'strong' ? 'Strong match' : fl === 'good' ? 'Good match' : 'Stretch'}));
     if (isNewJob(j)) tags.push(el('span', {class:'tag', text:'New'}));
     if (typeTag) tags.push(el('span', {class:'tag is-plain', text:typeTag}));
     if (j.tier === 'C') tags.push(el('span', {class:'tag is-plain', text:'Long shot'}));
@@ -7474,13 +7497,20 @@ function jobsRefresh(){
     regionsOf(j).forEach(function(r){ tags.push(el('span', {class:'tag is-plain', text:r})); });
     return el('li', {class: tracked ? 'is-tracked' : ''}, [
       el('div', {class:'jt'}, [el('a', {href:j.url, target:'_blank', rel:'noopener', text:j.title})].concat(tags).concat([
-        el('span', {class:'jc', text: j.company + ' · ' + (j.location || regionsOf(j).join(', ')) + (j.posted ? ' · posted ' + shortDate(j.posted) : '')})])),
+        el('span', {class:'jc', text: j.company + ' · ' + (j.location || regionsOf(j).join(', ')) + (j.posted ? ' · posted ' + shortDate(j.posted) : '')}),
+        fitWhy(j) ? el('span', {class:'jfit', text: fitWhy(j)}) : null])),
       el('div', {class:'job-acts'}, [
         el('button', {type:'button', class:'btn btn-small btn-quiet', 'data-fid':'job-ref', title:'Find someone at ' + j.company + ' who could refer you', onclick:function(){ var ty = jobType(j); PEOPLE_PREFILL = {company:j.company, path: ty === 'open' || ty === 'build' ? 'other' : ty}; location.hash = '#/people'; }}, ['Find a referrer']),
         tracked ? el('a', {class:'btn btn-small btn-quiet', href:'#/apps', text:'Tracking'})
                 : el('button', {type:'button', class:'btn btn-small', onclick:function(){ trackJob(j); }}, ['Track'])])]);
   };
-  if (f.sort === 'new' && shown.length) {
+  var byFit = function(a, b){ var fa = typeof a.fit === 'number' ? a.fit : -99, fb = typeof b.fit === 'number' ? b.fit : -99; return fb - fa; };
+  if (f.sort === 'match' && shown.length) {
+    var tName2 = {}; JOB_TYPES.forEach(function(T){ tName2[T[0]] = T[1]; });
+    var mlist = shown.slice().sort(function(a, b){ var d = byFit(a, b); if (d) return d; return jobAge(a) - jobAge(b); });
+    box.appendChild(el('section', {class:'jobgroup'}, [el('h2', {text:'Best match first (' + mlist.length + ')'}), el('p', {text:'Scored against your profile: options and markets, finance, equity research, AI agents, product and client work, Python and SQL count for a role; production software engineering, ML research, a sales quota or more experience than you have count against it.'}),
+      el('ul', {class:'joblist'}, mlist.slice(0, 300).map(function(j){ return row(j, tName2[jobType(j)]); }))]));
+  } else if (f.sort === 'new' && shown.length) {
     var tName = {}; JOB_TYPES.forEach(function(T){ tName[T[0]] = T[1]; });
     var list = shown.slice().sort(function(a, b){ var x = jobAge(a), y = jobAge(b); if (x !== y) return x - y; return (a.tier || 'B') < (b.tier || 'B') ? -1 : 1; });
     box.appendChild(el('section', {class:'jobgroup'}, [el('h2', {text:'Newest first (' + list.length + ')'}), el('ul', {class:'joblist'}, list.slice(0, 300).map(function(j){ return row(j, tName[jobType(j)]); }))]));
@@ -7490,7 +7520,7 @@ function jobsRefresh(){
       var js = shown.filter(function(j){ return jobGroup(j) === g.p; });
       if (!js.length) return;
       gNo++;
-      js.sort(function(a, b){ var ta = a.tier || 'B', tb = b.tier || 'B'; if (ta !== tb) return ta < tb ? -1 : 1; var na = isNewJob(a) ? 1 : 0, nb = isNewJob(b) ? 1 : 0; if (na !== nb) return nb - na; return a.company === b.company ? (a.title < b.title ? -1 : 1) : (a.company < b.company ? -1 : 1); });
+      js.sort(function(a, b){ var df = byFit(a, b); if (df) return df; var ta = a.tier || 'B', tb = b.tier || 'B'; if (ta !== tb) return ta < tb ? -1 : 1; var na = isNewJob(a) ? 1 : 0, nb = isNewJob(b) ? 1 : 0; if (na !== nb) return nb - na; return a.company === b.company ? (a.title < b.title ? -1 : 1) : (a.company < b.company ? -1 : 1); });
       box.appendChild(el('section', {class:'jobgroup', id: g.p === 'er' ? 'jobs-er' : g.p === 9 ? 'jobs-opt' : null}, [el('h2', {text: gNo + '. ' + g.title + ' (' + js.length + ')'}), el('p', {text:g.note}), el('ul', {class:'joblist'}, js.map(function(j){ return row(j); }))]));
     });
   }
