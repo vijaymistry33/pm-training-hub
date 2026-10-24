@@ -1280,6 +1280,17 @@ body.fx-open{overflow:hidden}
 .joblist .tag.tag-visa{background:var(--gain-wash);color:var(--gain)}
 .joblist .tag.tag-novisa{background:var(--loss-wash);color:var(--loss)}
 
+/* automatic backups */
+.bk-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 0}
+.bk-top .status-msg{margin:0}
+.bk-last{margin:10px 0 0;font-size:15.5px}
+.bk-det{margin:8px 0 0}
+.bk-det > summary{cursor:pointer;color:var(--focus);font-size:15px}
+.bk-list{list-style:none;margin:8px 0 0;padding:0;max-width:44rem;border-top:1px solid var(--rule)}
+.bk-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule-soft)}
+.bk-list li b{display:block;font-size:15.5px}
+.bk-list li span{display:block;color:var(--muted);font-size:14px}
+
 /* ---------- Trader prep ---------- */
 .tp-sprint{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;max-width:52rem;margin:6px 0 24px;padding:14px 18px;border-radius:16px;background:var(--now-bg);color:var(--now-ink)}
 .tp-sprint b{display:block;font-size:18px}
@@ -1565,9 +1576,14 @@ body.fx-open{overflow:hidden}
           <p id="saved-where">Your ticks, logs, scores and applications are saved inside this browser on this computer. They stay when you close the browser, but not if you clear browsing data, switch browsers or move to another computer. A backup file keeps them safe.</p>
           <p id="backup-when" class="status-msg"></p>
         </section>
+        <section id="bk-sec">
+          <h2>Automatic backups</h2>
+          <p id="bk-note">Nothing to set up. Each day you use Career Hub, your hub account keeps a copy of how everything stood before that day’s first change, for 60 days, and it takes another copy before any restore or reset. Your PC also saves a dated backup file in PM-Training\backups every time the job scan runs. Restore any copy here and every device follows.</p>
+          <div id="bk-slot"></div>
+        </section>
         <div id="sync-slot"></div>
         <section id="auto-sec">
-          <h2>Automatic backup file</h2>
+          <h2>Live backup file on this computer (optional)</h2>
           <p>Keeps a copy of everything in one file on your computer, updated a second or two after every change. Save it in your PM-Training folder. If you ever clear your browser or switch browsers, use Restore from a backup below and choose this file.</p>
           <div id="auto-slot"></div>
         </section>
@@ -1585,7 +1601,7 @@ body.fx-open{overflow:hidden}
         </section>
         <section>
           <h2>Start over</h2>
-          <p id="reset-note">Clears all saved progress in this browser, and in the automatic backup file if it’s on. Download a backup first if you might want it back.</p>
+          <p id="reset-note">Clears all saved progress in this browser, and in the automatic backup file if it’s on. A copy is kept under Automatic backups first, so you can undo it.</p>
           <button class="btn btn-danger" type="button" id="do-reset">Clear all progress</button>
           <p class="status-msg" id="reset-msg" role="status"></p>
         </section>
@@ -7040,6 +7056,7 @@ function downloadBackup(){
   renderBackup();
 }
 function renderBackup(){
+  bkRender(); if (BK.list === null || Date.now() - BK.at > 30000) bkLoad();
   var n = document.getElementById('backup-when');
   var days = doneCount();
   n.textContent = (S.lastBackup ? 'Last backup: ' + shortDate(S.lastBackup.slice(0,10)) + '. ' : 'No backup downloaded yet. ') + days + (days === 1 ? ' day' : ' days') + ' ticked, ' + S.apps.length + (S.apps.length === 1 ? ' role' : ' roles') + ' tracked.';
@@ -7068,11 +7085,13 @@ document.getElementById('restore-file').addEventListener('change', function(e){
   r.onload = function(){
     try {
       var p = JSON.parse(r.result);
+      if (p && !p.v && p.state && p.state.v === 1) p = p.state;   // daily backup files from the PC scan wrap the state
       if (!p || p.v !== 1 || typeof p.days !== 'object') throw new Error('shape');
+      bkSafety('before-restore');
       S = merge(p); save(); viewIso = null; syncDocs(); badges(); renderBackup();
       var dn = doneCount(), saved = p.lastBackup || p.updated; msg.className = 'status-msg'; msg.textContent = 'Restored ' + dn + (dn === 1 ? ' ticked day' : ' ticked days') + ' and ' + S.apps.length + (S.apps.length === 1 ? ' role' : ' roles') + (saved ? ' from the backup dated ' + shortDate(saved.slice(0,10)) : '') + '.';
     } catch(err) {
-      msg.className = 'status-msg is-loss'; msg.textContent = 'That file isn’t a hub backup. Choose a file named like pm-hub-backup-2026-10-25.json.';
+      msg.className = 'status-msg is-loss'; msg.textContent = 'That file isn’t a hub backup. Choose a file named like career-hub-2026-10-25.json (in PM-Training\\backups) or pm-hub-backup-2026-10-25.json.';
     }
     e.target.value = '';
   };
@@ -7081,8 +7100,11 @@ document.getElementById('restore-file').addEventListener('change', function(e){
 document.getElementById('do-reset').addEventListener('click', function(e){
   var b = e.currentTarget, msg = document.getElementById('reset-msg');
   if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = 'Click again to clear everything'; setTimeout(function(){ delete b.dataset.arm; b.textContent = 'Clear all progress'; }, 5000); return; }
-  var theme = S.settings.theme; S = blank(); S.settings.theme = theme; QUIZ = null; CARDS = null; quizSave(); save(); syncDocs(); badges(); renderBackup();
-  delete b.dataset.arm; b.textContent = 'Clear all progress'; msg.textContent = 'All progress cleared.';
+  delete b.dataset.arm; b.textContent = 'Clear all progress'; b.disabled = true;
+  bkSafety('before-reset').then(function(){
+    var theme = S.settings.theme; S = blank(); S.settings.theme = theme; QUIZ = null; CARDS = null; quizSave(); save(); syncDocs(); badges(); BK.list = null; renderBackup();
+    b.disabled = false; msg.textContent = 'All progress cleared.' + (bkOn() ? ' A copy is kept under Automatic backups if you change your mind.' : '');
+  });
 });
 
 /* ---------- docs: toc, copy, glossary ---------- */
@@ -7574,6 +7596,54 @@ function sbRpc(name, args){
       var j = null; try { j = t ? JSON.parse(t) : null; } catch(e){}
       if (!r.ok) { var err = new Error((j && j.message) || ('HTTP ' + r.status)); err.badkey = /unknown sync code/.test((j && j.message) || ''); throw err; }
       return j; }); });
+}
+/* ---------- automatic backups kept in the hub account ---------- */
+var BK = {list:null, err:'', busy:false, at:0, msg:null};
+var BK_KIND = {daily:'', manual:'Saved by you', 'before-restore':'Before a restore', 'before-reset':'Before clearing progress'};
+function bkOn(){ return CLOUD.mode === 'supabase' && !!(SB && SB.key) && CLOUD.state !== 'badkey'; }
+function bkSafety(kind){ return bkOn() ? sbRpc('hub_backup_put', {p_key:SB.key, p_kind:kind}).catch(function(){}) : Promise.resolve(); }
+function bkLoad(){
+  if (!bkOn() || BK.busy) return;
+  BK.busy = true;
+  sbRpc('hub_backup_list', {p_key:SB.key}).then(function(r){ BK.list = Array.isArray(r) ? r : []; BK.err = ''; BK.at = Date.now(); }, function(e){ BK.err = (e && e.message) || 'unreachable'; })
+    .then(function(){ BK.busy = false; if (currentRoute === 'backup') bkRender(); });
+}
+function bkLabel(b){ return b.kind === 'daily' ? 'Start of ' + shortDate(b.day) : BK_KIND[b.kind] + ', ' + timeOf(b.saved_at); }
+function bkRestore(b, btn){
+  BK.msg = null;
+  if (!btn.dataset.arm) { btn.dataset.arm = '1'; btn.textContent = 'Tap again to restore'; setTimeout(function(){ if (btn.isConnected) { delete btn.dataset.arm; btn.textContent = 'Restore'; } }, 5000); return; }
+  btn.disabled = true; btn.textContent = 'Restoring…';
+  var msg = document.getElementById('bk-msg');
+  bkSafety('before-restore').then(function(){ return sbRpc('hub_backup_get', {p_key:SB.key, p_id:b.id}); }).then(function(r){
+    var st = r && r.state;
+    if (!st || st.v !== 1) throw new Error('shape');
+    S = merge(st); QUIZ = null; CARDS = null; quizSave(); save(); viewIso = null; applyTheme(); qbInit(); syncDocs(); badges();
+    BK.list = null; BK.msg = ['', 'Restored the copy from ' + bkLabel(b).replace(/^Start of /, 'the start of ') + '. Your phone and PC will follow; the version you replaced is kept as “Before a restore”.'];
+    renderBackup();
+  }).catch(function(){ btn.disabled = false; btn.textContent = 'Restore'; delete btn.dataset.arm; BK.msg = ['is-loss', 'Couldn’t restore that copy. Check your connection and try again.']; if (msg) { msg.className = 'status-msg is-loss'; msg.textContent = BK.msg[1]; } });
+}
+function bkRender(){
+  var slot = document.getElementById('bk-slot'); if (!slot) return;
+  clear(slot);
+  if (!bkOn()) { slot.appendChild(el('p', {class:'status-msg', text: CLOUD.mode === 'supabase' ? 'Link this device to your hub account below to use automatic backups.' : 'Automatic backups need your hub account, which isn’t set up on this device. Download a backup instead.'})); return; }
+  var save1 = el('button', {type:'button', class:'btn', 'data-fid':'bk-now', onclick:function(e){ var t = e.currentTarget; t.disabled = true; t.textContent = 'Saving…';
+    (CLOUD.busy || CLOUD.timer ? new Promise(function(res){ setTimeout(res, 1600); }) : Promise.resolve()).then(function(){ return sbRpc('hub_backup_put', {p_key:SB.key, p_kind:'manual'}); })
+      .then(function(){ BK.list = null; bkLoad(); }, function(){ t.disabled = false; t.textContent = 'Save a copy now'; }); }}, ['Save a copy now']);
+  slot.appendChild(el('div', {class:'bk-top'}, [save1, el('p', {class:'status-msg' + (BK.msg && BK.msg[0] ? ' ' + BK.msg[0] : ''), id:'bk-msg', role:'status', text: BK.msg ? BK.msg[1] : ''})]));
+  if (BK.list === null) { slot.appendChild(el('p', {class:'status-msg', text: BK.err ? 'Can’t reach your hub account right now, so the list of backups isn’t showing. Your copies are safe.' : 'Loading your backups…'})); return; }
+  if (!BK.list.length) { slot.appendChild(el('p', {class:'status-msg', text:'No copies yet. The first one is taken the next time you change anything.'})); return; }
+  var latest = BK.list[0];
+  slot.appendChild(el('p', {class:'bk-last', text:'Latest copy: ' + bkLabel(latest) + '. ' + BK.list.length + (BK.list.length === 1 ? ' copy' : ' copies') + ' kept.'}));
+  var ul = el('ul', {class:'bk-list'});
+  BK.list.slice(0, 40).forEach(function(b){
+    var bits = [b.days + (b.days === 1 ? ' PM day' : ' PM days'), b.er_done + ' NISM units', b.apps + (b.apps === 1 ? ' application' : ' applications')];
+    if (b.people) bits.push(b.people + (b.people === 1 ? ' contact' : ' contacts'));
+    var btn = el('button', {type:'button', class:'btn btn-small', 'data-fid':'bk-restore'}, ['Restore']);
+    btn.addEventListener('click', function(){ bkRestore(b, btn); });
+    ul.appendChild(el('li', {}, [el('div', {}, [el('b', {text:bkLabel(b)}), el('span', {text:bits.join(' · ')})]), btn]));
+  });
+  var det = el('details', {class:'bk-det'}, [el('summary', {text:'Show all copies'}), ul]);
+  slot.appendChild(det);
 }
 function sbInit(){
   if (CLOUD.mode !== 'supabase') return;
