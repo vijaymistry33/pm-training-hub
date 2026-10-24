@@ -7255,15 +7255,15 @@ var JOB_GROUPS = [
   {p:5, title:'Other fintech product roles', note:'Payments, banking and infrastructure. Worth a look, but lower on your list.'},
   {p:6, title:'Trading and markets roles where your experience is the edge', note:'Not product roles: trader, dealer, derivatives, market risk, surveillance, research and specialist roles at brokers, exchanges, crypto venues and trading firms. Here your live F&O trading experience is the main qualification, and the Cheat sheets explain how to pitch it (sheet 16). Roles marked “Long shot” are at elite trading firms that mostly hire from other trading desks.'},
   {p:7, title:'Open-door roles where your skills transfer', note:'Business and data analyst, operations, customer success, implementation, community, content and testing roles with broad hiring criteria. They ask for what you can already show, such as markets knowledge, data work, writing and the tools you’ve built, rather than a set degree or job title. They get you inside a target company, and product roles are an internal move away (Cheat sheets, sheet 17).'},
-  {p:8, title:'AI-native builder roles', note:'AI solutions, automation, forward-deployed and product-engineer roles, where you specify a tool, build it with AI coding agents and ship it, as you did with the Decision Console. Check the coding bar in each listing: many expect you to write code yourself.'}];
+  {p:8, title:'AI-native builder roles', note:'Forward-deployed, deployment-strategist, applied-AI, agent, solutions and automation roles at AI companies (OpenAI, Anthropic, Databricks, Palantir, Sierra, Decagon, Rogo, n8n, Sarvam and more) and at fintechs. You take an AI product into a customer’s real work, specify what to build, build it with AI tools and ship it, as you did with the Decision Console and Melange. Check the coding bar in each listing: “forward deployed engineer” roles usually expect you to write production code yourself, while deployment strategist, agent development and solutions roles lean on judgement, domain knowledge and specification. Rogo’s “Forward Deployed Banker” roles want finance experience above all. Roles at the AI labs are marked Long shot.'}];
 var REGIONS = ['India', 'Europe', 'Singapore', 'Canada'];
 var ER_JOB_RE = /research analyst|equity research|research associate|investment research|(?:sector|fundamental|equity|buy[- ]side|sell[- ]side|credit|fund|investment|ratings?) analyst|analyst,? (?:equity|equities) research|\bER associate|research (?:intern|trainee)/i;
 function jobGroup(j){ if (j.priority === 9) return 9; if (!(j.priority >= 6 || j.priority === undefined)) return j.priority; if (ER_JOB_RE.test(j.title || '')) return 'er'; return isOptJob(j) ? 9 : j.priority; }
-var KIND_NAMES = {invest:'Broker, trading or investing app', trading:'Trading firm', crypto:'Crypto exchange', infra:'Exchange, market data or trading software', fintech:'Fintech', bank:'Bank or asset manager', amc:'Indian fund house', research:'Research, ratings or index firm'};
+var KIND_NAMES = {invest:'Broker, trading or investing app', trading:'Trading firm', crypto:'Crypto exchange', infra:'Exchange, market data or trading software', fintech:'Fintech', bank:'Bank or asset manager', amc:'Indian fund house', research:'Research, ratings or index firm', ai:'AI company'};
 var TIERS = [
   {t:'A', title:'Strong fit', note:'Brokers, trading and investing apps, and crypto exchanges. Their products are built for people like you, so apply to every relevant opening.'},
-  {t:'B', title:'Good fit', note:'Other fintechs, exchanges, market data and trading software, larger brokers, banks’ and fund managers’ markets teams, Indian fund houses and research firms, where your markets knowledge still counts.'},
-  {t:'C', title:'Long shot', note:'Elite trading firms and registrars that rarely hire from outside. Apply only when a role matches you closely.'}];
+  {t:'B', title:'Good fit', note:'Other fintechs, exchanges, market data and trading software, larger brokers, banks’ and fund managers’ markets teams, Indian fund houses and research firms, where your markets knowledge still counts. Also the AI companies whose forward-deployed and deployment roles reward domain knowledge.'},
+  {t:'C', title:'Long shot', note:'Elite trading firms, the big AI labs and registrars, which rarely hire from outside their usual pools. Apply only when a role matches you closely.'}];
 var TIER_OPEN = {};
 var JOB_BOARDS = [
   ['India', 'LinkedIn: product manager, fintech, India', 'https://www.linkedin.com/jobs/search/?keywords=product%20manager%20fintech&location=India'],
@@ -7274,6 +7274,7 @@ var JOB_BOARDS = [
   ['India', 'LinkedIn: equity research associate, Bengaluru', 'https://www.linkedin.com/jobs/search/?keywords=%22equity%20research%22%20associate&location=Bengaluru%2C%20Karnataka%2C%20India'],
   ['India', 'Naukri: equity research associate, Mumbai', 'https://www.naukri.com/equity-research-associate-jobs-in-mumbai'],
   ['India', 'Naukri: equity research associate, Bengaluru', 'https://www.naukri.com/equity-research-associate-jobs-in-bangalore'],
+  ['India', 'LinkedIn: forward-deployed, AI deployment and AI solutions roles, India', 'https://www.linkedin.com/jobs/search/?keywords=%22forward%20deployed%22%20OR%20%22deployment%20strategist%22%20OR%20%22AI%20solutions%22%20OR%20%22AI%20deployment%22%20OR%20%22GTM%20engineer%22&location=India'],
   ['India', 'LinkedIn: options trader and F&O dealer roles, India', 'https://www.linkedin.com/jobs/search/?keywords=%22options%20trader%22%20OR%20%22derivatives%20trader%22%20OR%20%22derivatives%20dealer%22%20OR%20%22F%26O%20dealer%22&location=India'],
   ['India', 'Naukri: options trader roles, India', 'https://www.naukri.com/options-trader-jobs'],
   ['India', 'Naukri: derivatives dealer roles, Mumbai', 'https://www.naukri.com/derivatives-dealer-jobs-in-mumbai'],
@@ -7284,6 +7285,7 @@ var JOB_BOARDS = [
   ['India', 'Wellfound (startups)', 'https://wellfound.com/jobs'],
   ['India', 'Naukri', 'https://www.naukri.com/'],
   ['Europe', 'LinkedIn: product manager, fintech, Europe', 'https://www.linkedin.com/jobs/search/?keywords=product%20manager%20fintech&location=Europe'],
+  ['Europe', 'LinkedIn: forward-deployed, AI deployment and AI solutions roles, Europe', 'https://www.linkedin.com/jobs/search/?keywords=%22forward%20deployed%22%20OR%20%22deployment%20strategist%22%20OR%20%22AI%20solutions%22%20OR%20%22AI%20deployment%22%20OR%20%22GTM%20engineer%22&location=Europe'],
   ['Europe', 'LinkedIn: options trader roles, Europe', 'https://www.linkedin.com/jobs/search/?keywords=%22options%20trader%22%20OR%20%22volatility%20trader%22%20OR%20%22options%20market%20maker%22&location=Europe'],
   ['Europe', 'LinkedIn: derivatives and trading roles, Europe', 'https://www.linkedin.com/jobs/search/?keywords=derivatives%20trading&location=Europe'],
   ['Europe', 'LinkedIn: analyst, operations and customer success roles at fintechs, Europe', 'https://www.linkedin.com/jobs/search/?keywords=%22business%20analyst%22%20OR%20%22customer%20success%22%20OR%20%22operations%20analyst%22%20fintech&location=Europe&f_E=2%2C3%2C4'],
@@ -7291,18 +7293,22 @@ var JOB_BOARDS = [
   ['Europe', 'StepStone (Germany)', 'https://www.stepstone.de/'],
   ['Europe', 'Berlin Startup Jobs', 'https://berlinstartupjobs.com/'],
   ['Singapore', 'LinkedIn: product manager, fintech, Singapore', 'https://www.linkedin.com/jobs/search/?keywords=product%20manager%20fintech&location=Singapore'],
+  ['Singapore', 'LinkedIn: forward-deployed, AI deployment and AI solutions roles, Singapore', 'https://www.linkedin.com/jobs/search/?keywords=%22forward%20deployed%22%20OR%20%22deployment%20strategist%22%20OR%20%22AI%20solutions%22%20OR%20%22AI%20deployment%22%20OR%20%22GTM%20engineer%22&location=Singapore'],
   ['Singapore', 'LinkedIn: options trader roles, Singapore', 'https://www.linkedin.com/jobs/search/?keywords=%22options%20trader%22%20OR%20%22volatility%20trader%22%20OR%20%22options%20market%20maker%22&location=Singapore'],
   ['Singapore', 'LinkedIn: derivatives and trading roles, Singapore', 'https://www.linkedin.com/jobs/search/?keywords=derivatives%20trading&location=Singapore'],
   ['Singapore', 'LinkedIn: analyst, operations and customer success roles at fintechs, Singapore', 'https://www.linkedin.com/jobs/search/?keywords=%22business%20analyst%22%20OR%20%22customer%20success%22%20OR%20%22operations%20analyst%22%20fintech&location=Singapore&f_E=2%2C3%2C4'],
   ['Singapore', 'MyCareersFuture (government portal)', 'https://www.mycareersfuture.gov.sg/'],
   ['Singapore', 'NodeFlair', 'https://nodeflair.com/jobs'],
   ['Canada', 'LinkedIn: product manager, fintech, Canada', 'https://www.linkedin.com/jobs/search/?keywords=product%20manager%20fintech&location=Canada'],
+  ['Canada', 'LinkedIn: forward-deployed, AI deployment and AI solutions roles, Canada', 'https://www.linkedin.com/jobs/search/?keywords=%22forward%20deployed%22%20OR%20%22deployment%20strategist%22%20OR%20%22AI%20solutions%22%20OR%20%22AI%20deployment%22%20OR%20%22GTM%20engineer%22&location=Canada'],
   ['Canada', 'LinkedIn: options trader roles, Canada', 'https://www.linkedin.com/jobs/search/?keywords=%22options%20trader%22%20OR%20%22volatility%20trader%22%20OR%20%22options%20market%20maker%22&location=Canada'],
   ['Canada', 'LinkedIn: derivatives and trading roles, Canada', 'https://www.linkedin.com/jobs/search/?keywords=derivatives%20trading&location=Canada'],
   ['Canada', 'LinkedIn: analyst, operations and customer success roles at fintechs, Canada', 'https://www.linkedin.com/jobs/search/?keywords=%22business%20analyst%22%20OR%20%22customer%20success%22%20OR%20%22operations%20analyst%22%20fintech&location=Canada&f_E=2%2C3%2C4'],
   ['Canada', 'Job Bank (Government of Canada)', 'https://www.jobbank.gc.ca/'],
   ['Canada', 'Indeed Canada', 'https://ca.indeed.com/'],
-  ['All', 'eFinancialCareers: trading, risk and markets roles in every region', 'https://www.efinancialcareers.com/']];
+  ['All', 'eFinancialCareers: trading, risk and markets roles in every region', 'https://www.efinancialcareers.com/'],
+  ['All', 'Work at a Startup (Y Combinator): forward-deployed, founding and AI engineer roles, many remote', 'https://www.workatastartup.com/jobs'],
+  ['All', 'Mercor: paid remote AI-training projects for finance and trading experts', 'https://work.mercor.com/']];
 function jobsData(){
   var live = window.JOBS_DATA, snap = JOBS_SNAPSHOT;
   if (live && live.jobs && (!snap || !snap.checked || live.checked >= snap.checked)) return live;
@@ -7463,7 +7469,7 @@ function jobsRefresh(){
     if (j.tier === 'C') tags.push(el('span', {class:'tag is-plain', text:'Long shot'}));
     if (typeof j.exp === 'number') tags.push(el('span', {class:'tag is-plain', text:'Asks ' + j.exp + '+ yrs'}));
     var abroad = regionsOf(j).some(function(r){ return r !== 'India'; });
-    if (abroad && j.visa === 'yes') tags.push(el('span', {class:'tag tag-visa', text:'Visa or relocation support'}));
+    if (j.visa === 'yes') tags.push(el('span', {class:'tag tag-visa', text: abroad ? 'Visa or relocation support' : 'Relocation support'}));
     if (abroad && j.visa === 'no') tags.push(el('span', {class:'tag tag-novisa', text:'No visa sponsorship'}));
     regionsOf(j).forEach(function(r){ tags.push(el('span', {class:'tag is-plain', text:r})); });
     return el('li', {class: tracked ? 'is-tracked' : ''}, [
@@ -8975,7 +8981,7 @@ function weekStrip(iso){
 function quickWins(){
   var wins = [], due = cardsDue().length, mk = erMistakeIds().length, g = todayGoals(), nj = newJobs().length, fu = followUps();
   if (fu) wins.push([fu === 1 && huntNext() ? huntNext().href : '#/people', erPlural(fu, 'follow-up') + ' due', '5 min']);
-  if (typeof ps === 'function' && !ps().sprint[today()]) wins.push(['#/tdrill/sprint', 'Mental maths sprint', '2 min']);
+  if (typeof ps === 'function' && ps().sprint[today()] === undefined) wins.push(['#/tdrill/sprint', 'Mental maths sprint', '2 min']);
   if (due) wins.push(['#/ercards', erPlural(due, 'flashcard') + ' due', '5 to 10 min']);
   if (mk) wins.push(['#/erquiz/mistakes', 'Redo ' + erPlural(mk, 'mistake'), '5 min']);
   // new jobs wait until today's sessions are done, so they're a reward rather than a distraction
@@ -9673,7 +9679,7 @@ function renderTprep(){
   var best = function(arr, mode){ var xs = arr.filter(function(x){ return x.mode === mode; }); return xs.length ? Math.max.apply(null, xs.map(function(x){ return x.score; })) : null; };
   var last = function(arr, mode){ var xs = arr.filter(function(x){ return x.mode === mode; }); return xs.length ? xs[xs.length - 1].score : null; };
   var tile = function(href, name, what, bestS, lastS, fid){ return el('a', {class:'tp-tile', href:href, 'data-fid':fid}, [el('b', {text:name}), el('span', {text:what}), el('small', {text: bestS === null ? 'Not tried yet' : 'Best ' + bestS + (lastS !== null ? ' · last ' + lastS : '')})]); };
-  var sprintDone = !!p.sprint[t];
+  var sprintDone = p.sprint[t] !== undefined;
   b.appendChild(el('section', {class:'tp-sprint' + (sprintDone ? ' is-done' : '')}, [
     el('div', {}, [el('b', {text: sprintDone ? 'Today’s sprint is done' : 'Daily mental maths sprint'}), el('span', {text: sprintDone ? 'Score ' + p.sprint[t] + '. Another round is optional.' : 'Two minutes, as many as you can. Speed comes from doing this every day.'})]),
     el('a', {class:'btn' + (sprintDone ? '' : ' btn-solid'), href:'#/tdrill/sprint', 'data-fid':'tp-sprint', text: sprintDone ? 'Go again' : 'Start · 2 min'})]));
@@ -9980,7 +9986,7 @@ function drillFinish(){
   var p = ps(), rec = {at:new Date().toISOString(), mode:D.mode, score:score, right:right, wrong:wrong, skip:skip, avg:rnd(D.res.avg, 1), by:by};
   var arr = D.M.kind === 'mm' ? p.mm : D.M.kind === 'seq' ? p.seq : p.pt;
   arr.push(rec); if (arr.length > 60) arr.splice(0, arr.length - 60);
-  if (D.mode === 'sprint') p.sprint[today()] = Math.max(p.sprint[today()] || -999, score);
+  if (D.mode === 'sprint') p.sprint[today()] = p.sprint[today()] === undefined ? score : Math.max(p.sprint[today()], score);
   if (D.M.kind === 'prob') D.items.forEach(function(it, i){ if (D.picks[i] === undefined) return; var r = p.q[it.qid] || {r:0, w:0}, ok = D.picks[i] === it.ans; r[ok ? 'r' : 'w']++; r.last = ok ? 'r' : 'w'; p.q[it.qid] = r; });
   save();
 }
