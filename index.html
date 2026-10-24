@@ -1291,6 +1291,14 @@ body.fx-open{overflow:hidden}
 .bk-list li b{display:block;font-size:15.5px}
 .bk-list li span{display:block;color:var(--muted);font-size:14px}
 
+.desk-scan{margin:4px 0 12px}
+/* desktop app: slim scrollbars in the app's colours */
+html.is-desktop::-webkit-scrollbar,html.is-desktop ::-webkit-scrollbar{width:10px;height:10px}
+html.is-desktop::-webkit-scrollbar-track,html.is-desktop ::-webkit-scrollbar-track{background:transparent}
+html.is-desktop::-webkit-scrollbar-thumb,html.is-desktop ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--ink) 24%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+html.is-desktop::-webkit-scrollbar-thumb:hover,html.is-desktop ::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--ink) 40%,transparent)}
+html.is-desktop::-webkit-scrollbar-button,html.is-desktop ::-webkit-scrollbar-button{display:none;height:0;width:0}
+
 /* ---------- Trader prep ---------- */
 .tp-sprint{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;max-width:52rem;margin:6px 0 24px;padding:14px 18px;border-radius:16px;background:var(--now-bg);color:var(--now-ink)}
 .tp-sprint b{display:block;font-size:18px}
@@ -7381,7 +7389,8 @@ function renderJobs(){
   }
   var f = jf(), region = S.settings.jobRegion || 'All';
   if (JF_OPEN === null) JF_OPEN = window.matchMedia && !window.matchMedia('(max-width: 760px)').matches && jfActive(f) > 0;
-  body.appendChild(el('p', {class:'jobs-meta', text:'Checked ' + timeOf(D.checked) + ' on ' + (D.boards || 0) + ' company job boards' + (D.companies && D.companies.length ? ', out of ' + D.companies.length + ' target companies' : '') + (!IS_FILE ? '. The list updates after each scan on your PC.' : '. The list refreshes every day before your session; to refresh now, double-click “Refresh jobs” in your PM-Training folder and reload this page.') + (D.failed && D.failed.length ? ' Not reached last time: ' + D.failed.join(', ') + '.' : '')}));
+  body.appendChild(el('p', {class:'jobs-meta', text:'Checked ' + timeOf(D.checked) + ' on ' + (D.boards || 0) + ' company job boards' + (D.companies && D.companies.length ? ', out of ' + D.companies.length + ' target companies' : '') + (!IS_FILE ? '. The list updates after each scan on your PC.' : (window.HUB_DESKTOP ? '. The list refreshes every day; use Refresh jobs now for a fresh scan.' : '. The list refreshes every day before your session; to refresh now, double-click “Refresh jobs” in your PM-Training folder and reload this page.')) + (D.failed && D.failed.length ? ' Not reached last time: ' + D.failed.join(', ') + '.' : '')}));
+  var dsb = deskScanButton(); if (dsb) body.appendChild(el('div', {class:'desk-scan'}, [dsb]));
   var count = function(r){ return all.filter(function(j){ return r === 'All' || regionsOf(j).indexOf(r) >= 0; }).length; };
   var chips = el('div', {class:'chips', role:'group', 'aria-label':'Region'});
   ['All'].concat(REGIONS).forEach(function(r){
@@ -7737,7 +7746,8 @@ function renderAutobar(){
   var bar = document.getElementById('autobar');
   if (!bar) return;
   clear(bar);
-  var p = currentRoute === 'backup' ? null : autoPanel(true);
+  /* the account keeps daily copies, so the optional backup file needs no nagging when sync is on */
+  var p = currentRoute === 'backup' || CLOUD.mode === 'supabase' ? null : autoPanel(true);
   if (p) bar.appendChild(p);
   bar.hidden = !p;
 }
@@ -8893,7 +8903,7 @@ function erInit(){
     TITLES[r] = ER_TITLES[r];
   });
   NAMES.erch = 'Equity research'; NAMES.erformulas = 'Formula sheet';
-  quizLoad(); huntInit(); prepInit();
+  quizLoad(); huntInit(); deskInit(); prepInit();
   abInit(); musicFix();
   readbarInit();
   focusInit();
@@ -9597,6 +9607,35 @@ function quickLog(kind){
   box.addEventListener('click', function(e){ if (e.target === box) box.remove(); });
   document.body.appendChild(box);
   var f = box.querySelector('button'); if (f) f.focus({preventScroll:true});
+}
+
+/* ---------- desktop app extras (only inside the Career Hub desktop app) ---------- */
+var DESK = {api:null, brainfm:false, scanning:false};
+function deskInit(){
+  var ready = function(){
+    if (!window.pywebview || !window.pywebview.api) return;
+    DESK.api = window.pywebview.api; document.body.classList.add('is-desktop'); document.documentElement.classList.add('is-desktop');
+    if (DESK.api.has_brainfm) DESK.api.has_brainfm().then(function(v){ DESK.brainfm = !!v; }, function(){});
+    if (currentRoute === 'jobs') renderJobs();
+  };
+  if (window.pywebview && window.pywebview.api) ready(); else window.addEventListener('pywebviewready', ready);
+  // the music buttons open the Brain.fm desktop app when it's installed
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[data-music]') : null;
+    if (!a || !DESK.api || !DESK.brainfm || a.classList.contains('fx-malt')) return;
+    e.preventDefault(); DESK.api.open_brainfm();
+  }, true);
+}
+function deskScanButton(){
+  if (!DESK.api || !DESK.api.refresh_jobs) return null;
+  var b = el('button', {type:'button', class:'btn btn-small', 'data-fid':'desk-scan', disabled: DESK.scanning || null}, [DESK.scanning ? 'Scanning job boards… about 4 minutes' : 'Refresh jobs now']);
+  b.addEventListener('click', function(){
+    DESK.scanning = true; b.disabled = true; b.textContent = 'Scanning job boards… about 4 minutes';
+    DESK.api.refresh_jobs().then(function(){
+      var t = setInterval(function(){ DESK.api.scan_status().then(function(r){ if (r && r.state === 'done') { clearInterval(t); DESK.scanning = false; location.reload(); } }); }, 5000);
+    }, function(){ DESK.scanning = false; b.disabled = false; b.textContent = 'Refresh jobs now'; });
+  });
+  return b;
 }
 
 /* ---------- Trader prep: maths lessons, placement, tests, puzzles and games ---------- */
